@@ -1,0 +1,175 @@
+################################################################################
+########################### Two Way Control ####################################
+#  This is the automation configuration that was used in the youtube video: to
+#. add two way communication to the Logitech Harmony Hub
+# - This code serves as a template but you will need to modify entity names and 
+#   state names based on your devices. Furthermore different devices may have some
+#   unique caveats regarding how they integrate with Home Assistant that may need
+#   to be accounted for
+
+# - Please let me know if your setup has unique situations which these automations don't
+#   account for
+
+# - This first automation syncs the harmony to the off whenever the TV is turned off
+# - The trigger is the TV changing states from on to off.
+# - The action is to turn off the runnning activity on the harmony
+# - Note if the TV was turned off using the harmony,then we don't want this automation
+#   to run since the harmony will already be off so we will declare the condition that
+#   the harmony is on for this automation to run.
+- id: harmony_sync_power_off
+  alias: Harmony Sync Power Off
+  trigger:
+    platform: state
+    entity_id: media_player.sharp_aquos_tv
+    from: "on"
+    to: "off"
+  condition:
+    - condition: state
+      entity_id: remote.harmony_hub
+      state: "on"
+  action:
+    - service: remote.turn_off
+      entity_id: remote.harmony_hub
+      
+      
+# - In your setup you may have activites where your reciever is on but your TV is off
+#   such as listening to music, in that case you will use this automation
+# - We will specify two triggers, the TV turning off and the reciever turning off. The
+#   automation will trigger when either the TV or the reciever turns off however, in 
+#   addition we will specify condtion that both the reciever and TV have to be off
+# - Thus this automation will turn the harmony off if both the reciever and TV have been
+#   turned off
+- id: harmony_sync_power_off
+  alias: Harmony Sync Power Off
+  trigger:
+    - platform: state
+      entity_id: media_player.sharp_aquos_tv
+      from: "on"
+      to: "off"
+    - platform: state
+      entity_id: media_player.denon_avr_x3400h
+      from: "on"
+      to: "off"  
+  condition:
+    - condition: state
+      entity_id: remote.harmony_hub
+      state: "on"
+    - platform: state
+      entity_id: media_player.sharp_aquos_tv
+      state: "off"
+    - platform: state
+      entity_id: media_player.denon_avr_x3400h
+      state: "off" 
+  action:
+    - service: remote.turn_off
+      entity_id: remote.harmony_hub      
+
+
+# - In the next automations, we will assign the harmony the correct activity based
+#   on the current selected input of the reciever. If you use your TV for switching
+#   instead of your reciver, the only thiing that needs to be changed is the entity
+#   id should be changed to be your TV
+# - Note you should check using developer tools what each input is called
+# - The condtion is defined similar to the last automation to ensure the automation
+#   doesn't trigger when it doesn't have too.
+- id: harmony_sync_movie
+  alias: Harmony Sync Movie
+  trigger:
+    platform: state
+    entity_id: media_player.denon_avr_x3400h
+    attribute: source
+    to: "Blu-ray"
+  condition:
+    - condition: not
+      conditions:
+        - condition: state
+          entity_id: remote.harmony_hub
+          attribute: current_activity
+          state: "Watch a Movie"
+  action:
+    - service: remote.turn_on
+      entity_id: remote.harmony_hub
+      data:
+        activity: "Watch a Movie"
+
+- id: harmony_sync_shield
+  alias: Harmony Sync Shield
+  trigger:
+    platform: state
+    entity_id: media_player.denon_avr_x3400h
+    attribute: source
+    to: "Media Player"
+  condition:
+    - condition: not
+      conditions:
+        - condition: state
+          entity_id: remote.harmony_hub
+          attribute: current_activity
+          state: "Shield"
+  action:
+    - service: remote.turn_on
+      entity_id: remote.harmony_hub
+      data:
+        activity: "Shield"
+        
+- id: harmony_sync_PS4
+  alias: Harmony Sync PS4
+  trigger:
+    platform: state
+    entity_id: media_player.denon_avr_x3400h
+    attribute: source
+    to: "Game"
+  condition:
+    - condition: not
+      conditions:
+        - condition: state
+          entity_id: remote.harmony_hub
+          attribute: current_activity
+          state: "Game"
+  action:
+    - service: remote.turn_on
+      entity_id: remote.harmony_hub
+      data:
+        activity: "Play PS4"        
+        
+
+# - If you use *both* your TV to switch inputs, you will need to use multiple
+#   triggers and condtions as follows:
+- id: harmony_sync_movie
+  alias: Harmony Sync Movie
+  trigger:
+    - platform: state
+      entity_id: media_player.denon_avr_x3400h
+      attribute: source
+      to: "Blu-ray"
+    - platform: state
+      entity_id: media_player.sharp_aquos_tv
+      attribute: source
+      to: "HDMI_IN_1"
+  condition:
+    - condition: state
+      entity_id: media_player.denon_avr_x3400h
+      attribute: source
+      state: "Blu-ray"
+    - condition: state
+      entity_id: media_player.sharp_aquos_tv
+      attribute: source
+      state: "HDMI_IN_1"
+    - condition: not
+      conditions:
+        - condition: state
+          entity_id: remote.harmony_hub
+          attribute: current_activity
+          state: "Watch a Movie"
+  action:
+    - service: remote.turn_on
+      entity_id: remote.harmony_hub
+      data:
+        activity: "Watch a Movie"        
+
+
+
+
+
+        
+     
